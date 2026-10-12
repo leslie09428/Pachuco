@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BotonesVoz } from "../../components/voz/BotonesVoz";
+import { useVoz } from "../../lib/voz/useVoz";
 
 interface MensajeChat {
   rol: "usuario" | "cronista";
@@ -36,6 +38,7 @@ export function CronistaChat() {
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
+  const voz = useVoz();
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -61,6 +64,7 @@ export function CronistaChat() {
       const data = (await res.json()) as RespuestaCronista;
       setMensajes((prev) => [...prev, { rol: "cronista", texto: data.respuesta }]);
       setTemas(data.temasRelacionados);
+      voz.hablar(data.respuesta);
     } catch {
       setError(
         "No pude conectar con Gemini. Configura GEMINI_API_KEY en .env y vuelve a intentarlo, carnal.",
@@ -127,6 +131,14 @@ export function CronistaChat() {
             {error}
           </p>
         )}
+        {voz.error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-mural-rose bg-mural-night px-4 py-2 text-sm text-mural-rose"
+          >
+            {voz.error}
+          </p>
+        )}
         <div ref={finRef} />
       </div>
 
@@ -159,6 +171,21 @@ export function CronistaChat() {
           maxLength={500}
           className="flex-1 bg-transparent px-5 py-3.5 text-sm text-mural-cream placeholder:text-mural-blush/50 focus:outline-none"
           aria-label="Pregunta para El Cronista"
+        />
+        <BotonesVoz
+          escuchando={voz.escuchando}
+          hablando={voz.hablando}
+          vozActiva={voz.vozActiva}
+          soportaMicrofono={voz.soportaMicrofono}
+          onMicrofono={() => {
+            if (voz.escuchando) {
+              voz.detenerEscucha();
+            } else {
+              voz.escuchar(preguntar, setPregunta);
+            }
+          }}
+          onAlternarVoz={voz.alternarVoz}
+          deshabilitado={ocupado}
         />
         <button
           type="submit"
