@@ -2,7 +2,7 @@ import { GlosarioCalo } from "@/features/calo/glosario-calo";
 import { introduccionCalo } from "@/lib/contenido/calo";
 
 export const metadata = {
-  title: "El Caló — Crónicas del Pachuco",
+  title: "El Caló — PachucoIA",
   description:
     "Glosario del caló, la lengua del barrio pachuco: saludos, gente, lugares, cosas y expresiones.",
 };

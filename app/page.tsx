@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { PachucoScene } from "@/features/pachuco/pachuco-scene";
 import { CronistaChat } from "@/features/cronista/cronista-chat";
@@ -32,10 +35,11 @@ const secciones = [
 
 export default function PaginaInicio() {
   const destacados = lineaDelTiempo.filter((h) => h.destacado).slice(0, 2);
+  const [pachucosHablando, setPachucosHablando] = useState(false);
 
   return (
     <div>
-      {/* Héroe con el pachuco 3D y El Cronista */}
+      {/* Héroe con el pachuco 3D y El Bato */}
       <section className="bg-[linear-gradient(135deg,#7a2e2e_0%,#9c4a3c_55%,#b96b45_100%)] px-4 py-10 sm:py-14">
         <div className="container grid items-start gap-10 lg:grid-cols-[1.15fr_1fr]">
           <div>
@@ -47,21 +51,21 @@ export default function PaginaInicio() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-mural-blush">
               Gira, saluda y baila con nuestro personaje pachuco en 3D, y
-              pregúntale a <strong className="text-mural-gold">El Cronista</strong>,
+              pregúntale a <strong className="text-mural-gold">El Bato</strong>,
               nuestro asistente de IA, todo sobre la historia, el traje, el
               caló y las costumbres del barrio.
             </p>
             <div className="mt-6 overflow-hidden rounded-xl border-2 border-mural-gold/70 bg-mural-night/60">
-              <PachucoScene />
+              <PachucoScene hablando={pachucosHablando} />
               <p className="border-t border-mural-gold/40 px-4 py-2 text-center text-xs text-mural-blush/80">
                 Arrastra para girar la cámara · usa la rueda para acercarte
               </p>
             </div>
           </div>
           <div className="lg:sticky lg:top-6">
-            <CronistaChat />
+            <CronistaChat onSpeakingChange={setPachucosHablando} />
             <p className="mt-3 text-center text-xs text-mural-blush/80">
-              El Cronista responde con información histórica verificada de este
+              El Bato responde con información histórica verificada de este
               sitio.
             </p>
           </div>
@@ -71,7 +75,7 @@ export default function PaginaInicio() {
       {/* Accesos a las secciones */}
       <section className="container py-12">
         <h2 className="font-display text-3xl font-bold text-mural-night">
-          Explora las crónicas
+          PachucoIA
         </h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {secciones.map((s) => (

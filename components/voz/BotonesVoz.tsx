@@ -3,6 +3,7 @@
 interface BotonesVozProps {
   escuchando: boolean;
   hablando: boolean;
+  cargando?: boolean;
   vozActiva: boolean;
   soportaMicrofono: boolean;
   onMicrofono: () => void;
@@ -57,6 +58,7 @@ const base =
 export function BotonesVoz({
   escuchando,
   hablando,
+  cargando = false,
   vozActiva,
   soportaMicrofono,
   onMicrofono,
@@ -70,9 +72,9 @@ export function BotonesVoz({
           type="button"
           onClick={onMicrofono}
           disabled={deshabilitado}
-          aria-label={escuchando ? "Dejar de escuchar" : "Hablarle al Cronista"}
+          aria-label={escuchando ? "Dejar de escuchar" : "Hablarle a El Bato"}
           aria-pressed={escuchando}
-          title={escuchando ? "Escuchando… toca para enviar" : "Hablarle al Cronista"}
+          title={escuchando ? "Escuchando… toca para enviar" : "Hablarle a El Bato"}
           className={`${base} ${
             escuchando
               ? "animate-pulse bg-red-500/30 text-red-200 motion-reduce:animate-none"
@@ -86,10 +88,18 @@ export function BotonesVoz({
       <button
         type="button"
         onClick={onAlternarVoz}
-        aria-label={vozActiva ? "Silenciar al Cronista" : "Activar la voz del Cronista"}
+        aria-label={vozActiva ? "Silenciar a El Bato" : "Activar la voz de El Bato"}
         aria-pressed={vozActiva}
-        title={vozActiva ? "Silenciar al Cronista" : "Activar la voz del Cronista"}
-        className={`${base} ${hablando ? "bg-white/10" : ""}`}
+        title={
+          cargando
+            ? "Preparando la voz…"
+            : vozActiva
+              ? "Silenciar a El Bato"
+              : "Activar la voz de El Bato"
+        }
+        className={`${base} ${hablando ? "bg-white/10" : ""} ${
+          cargando ? "animate-pulse motion-reduce:animate-none" : ""
+        }`}
       >
         <IconoBocina activa={vozActiva} />
       </button>

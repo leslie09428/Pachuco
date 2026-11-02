@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { BotonesVoz } from "../../components/voz/BotonesVoz";
 import { useVoz } from "../../lib/voz/useVoz";
 
+interface CronistaChatProps {
+  onSpeakingChange?: (speaking: boolean) => void;
+}
+
 interface MensajeChat {
   rol: "usuario" | "cronista";
   texto: string;
@@ -20,12 +24,12 @@ interface RespuestaCronista {
   temasRelacionados: TemaRelacionado[];
 }
 
-export function CronistaChat() {
+export function CronistaChat({ onSpeakingChange }: CronistaChatProps) {
   const [mensajes, setMensajes] = useState<MensajeChat[]>([
     {
       rol: "cronista",
       texto:
-        "¡Órale, qué gusto verte! Soy El Cronista, tu guía por el mundo pachuco. Pregúntame de la historia, del traje zoot, del caló o de los dances. ¿Por dónde empezamos?",
+        "¡Órale, qué gusto verte! Soy El Bato, tu guía por el mundo pachuco. Pregúntame de la historia, del traje zoot, del caló o de los dances. ¿Por dónde empezamos?",
     },
   ]);
   const [temas, setTemas] = useState<TemaRelacionado[]>([
@@ -39,6 +43,17 @@ export function CronistaChat() {
   const [error, setError] = useState<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
   const voz = useVoz();
+
+  useEffect(() => {
+    onSpeakingChange?.(voz.hablando);
+  }, [onSpeakingChange, voz.hablando]);
+
+  useEffect(
+    () => () => {
+      onSpeakingChange?.(false);
+    },
+    [onSpeakingChange],
+  );
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -81,7 +96,7 @@ export function CronistaChat() {
   return (
     <div
       className="flex h-[520px] flex-col overflow-hidden rounded-xl border-2 border-mural-gold bg-mural-night/95 shadow-[0_0_30px_rgba(74,28,28,0.4)]"
-      aria-label="Conversación con El Cronista"
+      aria-label="Conversación con El Bato"
     >
       <div className="flex items-center gap-3 border-b border-mural-gold/40 bg-mural-teal/30 px-5 py-3">
         <span
@@ -90,7 +105,7 @@ export function CronistaChat() {
         />
         <div>
           <p className="font-display text-lg font-bold text-mural-gold">
-            El Cronista
+            El Bato
           </p>
           <p className="text-xs text-mural-blush/80">
             Inteligencia artificial dedicada a la cultura pachuco
@@ -118,7 +133,7 @@ export function CronistaChat() {
         {ocupado && (
           <div className="flex justify-start">
             <p className="rounded-2xl rounded-bl-md bg-mural-cream px-4 py-2.5 text-sm text-mural-night/70">
-              El Cronista está recordando la crónica…
+              El Bato está pensando…
             </p>
           </div>
         )}
@@ -170,7 +185,7 @@ export function CronistaChat() {
           placeholder="Escribe tu pregunta aquí…"
           maxLength={500}
           className="flex-1 bg-transparent px-5 py-3.5 text-sm text-mural-cream placeholder:text-mural-blush/50 focus:outline-none"
-          aria-label="Pregunta para El Cronista"
+          aria-label="Pregunta para El Bato"
         />
         <BotonesVoz
           escuchando={voz.escuchando}

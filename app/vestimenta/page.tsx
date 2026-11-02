@@ -5,7 +5,7 @@ import {
 } from "@/lib/contenido/vestimenta";
 
 export const metadata = {
-  title: "Vestimenta — Crónicas del Pachuco",
+  title: "Vestimenta — PachucoIA",
   description:
     "La anatomía del zoot suit: cada pieza del traco pachuco y lo que significaba.",
 };

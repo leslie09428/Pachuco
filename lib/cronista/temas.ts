@@ -263,12 +263,12 @@ export const temasCronista: TemaCronista[] = [
       "que hubo",
     ],
     respuesta:
-      "¡Órale, qué gusto verte! Soy El Cronista, tu guía por el mundo pachuco. Pregúntame lo que quieras: historia, el traje zoot, el caló, los dances, las pachucas o lo que quedó de todo eso hoy. ¿Por dónde empezamos?",
+      "¡Órale, qué gusto verte! Soy El Bato, tu guía por el mundo pachuco. Pregúntame lo que quieras: historia, el traje zoot, el caló, los dances, las pachucas o lo que quedó de todo eso hoy. ¿Por dónde empezamos?",
     relacionados: ["quienes-eran", "zoot-suit", "calo"],
   },
   {
     id: "quien-eres",
-    etiqueta: "¿Quién es El Cronista?",
+    etiqueta: "¿Quién es El Bato?",
     palabrasClave: [
       "quien eres",
       "que eres",
@@ -280,7 +280,7 @@ export const temasCronista: TemaCronista[] = [
       "eres una ia",
     ],
     respuesta:
-      "Soy El Cronista, el cronista digital de Crónicas del Pachuco. Cuanto sé proviene del contenido cultural de este sitio, curado con cuidado: historia, vestimenta, lenguaje y costumbres del mundo pachuco. No soy adivino: si algo no lo tengo, te lo digo con honestidad y te acerco los temas que sí domino. Simón, soy un asistente, pero uno con mucho barrio.",
+      "Soy El Bato, el asistente de PachucoIA. Cuanto sé proviene del contenido cultural de este sitio, curado con cuidado: historia, vestimenta, lenguaje y costumbres del mundo pachuco. No soy adivino: si algo no lo tengo, te lo digo con honestidad y te acerco los temas que sí domino. Simón, soy un asistente, pero uno con mucho barrio.",
     relacionados: ["saludo", "quienes-eran", "calo"],
   },
   {

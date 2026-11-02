@@ -1,7 +1,7 @@
 import { costumbres, introduccionCostumbres } from "@/lib/contenido/costumbres";
 
 export const metadata = {
-  title: "Costumbres — Crónicas del Pachuco",
+  title: "Costumbres — PachucoIA",
   description:
     "El dance, el swing, el barrio y la elegancia: las costumbres que hicieron del estilo pachuco una cultura viva.",
 };

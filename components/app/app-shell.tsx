@@ -23,7 +23,7 @@ export function AppShell({ children }: PropsWithChildren) {
             href="/"
             className="font-display text-xl font-bold tracking-wide text-mural-gold sm:text-2xl"
           >
-            ✦ CRÓNICAS DEL PACHUCO ✦
+            ✦ PACHUCOIA ✦
           </Link>
           <nav aria-label="Secciones">
             <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
@@ -54,7 +54,7 @@ export function AppShell({ children }: PropsWithChildren) {
 
       <footer className="border-t-4 border-mural-gold bg-mural-night px-4 py-6 text-center">
         <p className="text-sm text-mural-cream/80">
-          Crónicas del Pachuco — difusión cultural con personaje 3D e
+          PachucoIA — difusión cultural con personaje 3D e
           inteligencia artificial, inspirada en proyectos como Don Quijote IA.
         </p>
         <p className="mt-1 text-xs text-mural-blush/60">

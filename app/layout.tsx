@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app/app-shell";
 import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Crónicas del Pachuco",
+  title: "PachucoIA",
   description:
     "Página web interactiva con un personaje pachuco en 3D y un asistente de IA para conocer la historia, vestimenta, lenguaje y costumbres de los pachucos.",
 };

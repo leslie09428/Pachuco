@@ -1,7 +1,7 @@
 import { introduccionHistoria, lineaDelTiempo } from "@/lib/contenido/historia";
 
 export const metadata = {
-  title: "Historia — Crónicas del Pachuco",
+  title: "Historia — PachucoIA",
   description:
     "Cronología de la historia pachuca: de la frontera de los años treinta a los Zoot Suit Riots de 1943 y el legado chicano.",
 };

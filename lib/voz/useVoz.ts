@@ -36,10 +36,24 @@ function obtenerReconocimiento(): ConstructorReconocimiento | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-// ---- Ajustes de la voz del pachuco (puedes jugar con estos valores) ----
+// Divide el texto en hasta 3 partes: primera frase, segunda frase y el resto.
+// El audio tarda más mientras más texto tenga, así que las partes cortas
+// empiezan a sonar antes y las demás se generan mientras tanto.
+function dividirTexto(texto: string): string[] {
+  const frases =
+    texto.match(/[^.!?\n]+[.!?]*/g)?.map((f) => f.trim()).filter(Boolean) ??
+    [texto];
+  if (frases.length <= 1) return [texto];
+  if (frases.length === 2) return frases;
+  const [primera, segunda, ...resto] = frases;
+  return [primera, segunda, resto.join(" ")];
+}
+
+// ---- Ajustes ----
 const IDIOMA = "es-MX";
-const VELOCIDAD = 0.95; // 1 = normal; menor = más lento
-const TONO = 0.85; // 1 = normal; menor = más grave
+// Solo afectan a la voz de respaldo del navegador (la principal es la del servidor)
+const VELOCIDAD_RESPALDO = 0.95;
+const TONO_RESPALDO = 0.85;
 
 const MENSAJES_ERROR: Record<string, string> = {
   "not-allowed":
@@ -56,24 +70,59 @@ export function useVoz() {
   const [escuchando, setEscuchando] = useState(false);
   const [vozActiva, setVozActiva] = useState(true);
   const [soportaMicrofono, setSoportaMicrofono] = useState(false);
+  const [cargandoVoz, setCargandoVoz] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reconocimientoRef = useRef<Reconocimiento | null>(null);
   const vozElegidaRef = useRef<SpeechSynthesisVoice | null>(null);
   const vozActivaRef = useRef(true);
 
+  // Audio del servidor
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const urlAudioRef = useRef<string | null>(null);
+  const peticionRef = useRef<AbortController | null>(null);
+
+  /** Detiene cualquier audio, petición o voz del navegador en curso. */
+  const detenerTodo = useCallback(() => {
+    peticionRef.current?.abort();
+    peticionRef.current = null;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (urlAudioRef.current) {
+      URL.revokeObjectURL(urlAudioRef.current);
+      urlAudioRef.current = null;
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
   useEffect(() => {
     setSoportaMicrofono(obtenerReconocimiento() !== null);
 
-    if (!("speechSynthesis" in window)) return undefined;
+    if (!("speechSynthesis" in window)) {
+      return () => {
+        detenerTodo();
+        reconocimientoRef.current?.abort();
+      };
+    }
 
-    // Busca una voz en español (primero México, luego EE. UU., luego cualquiera)
+    // Voz de respaldo: la mejor voz en español de México que tenga el navegador
     const elegirVoz = () => {
       const voces = window.speechSynthesis.getVoices();
+      const idioma = (v: SpeechSynthesisVoice) => v.lang.replace("_", "-");
+      const espanol = voces.filter((v) => idioma(v).startsWith("es"));
+      const mexico = espanol.filter((v) => idioma(v) === "es-MX");
+
       vozElegidaRef.current =
-        voces.find((v) => v.lang === "es-MX") ??
-        voces.find((v) => v.lang.startsWith("es-US")) ??
-        voces.find((v) => v.lang.startsWith("es")) ??
+        mexico.find((v) => /jorge/i.test(v.name)) ??
+        mexico.find((v) => /natural|online/i.test(v.name)) ??
+        mexico[0] ??
+        espanol.find((v) => idioma(v) === "es-US") ??
+        espanol[0] ??
         null;
     };
     elegirVoz();
@@ -81,31 +130,27 @@ export function useVoz() {
 
     return () => {
       window.speechSynthesis.removeEventListener("voiceschanged", elegirVoz);
-      window.speechSynthesis.cancel();
+      detenerTodo();
       reconocimientoRef.current?.abort();
     };
-  }, []);
+  }, [detenerTodo]);
 
-  /** El Cronista dice el texto en voz alta. */
-  const hablar = useCallback((texto: string) => {
-    if (!vozActivaRef.current) return;
+  /** Respaldo: voz del propio navegador (suena más robótica). */
+  const hablarConNavegador = useCallback((texto: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-
-    const limpio = texto.trim();
-    if (!limpio) return;
 
     window.speechSynthesis.cancel();
 
     // Se habla por frases: así Chrome no corta los textos largos.
     const frases =
-      limpio.match(/[^.!?\n]+[.!?]*/g)?.map((f) => f.trim()).filter(Boolean) ??
-      [limpio];
+      texto.match(/[^.!?\n]+[.!?]*/g)?.map((f) => f.trim()).filter(Boolean) ??
+      [texto];
 
     frases.forEach((frase, i) => {
       const locucion = new SpeechSynthesisUtterance(frase);
       locucion.lang = IDIOMA;
-      locucion.rate = VELOCIDAD;
-      locucion.pitch = TONO;
+      locucion.rate = VELOCIDAD_RESPALDO;
+      locucion.pitch = TONO_RESPALDO;
       if (vozElegidaRef.current) locucion.voice = vozElegidaRef.current;
 
       if (i === 0) locucion.onstart = () => setHablando(true);
@@ -120,12 +165,108 @@ export function useVoz() {
     });
   }, []);
 
+  /**
+   * El Cronista dice el texto en voz alta.
+   * Primero pide el audio natural a ElevenLabs vía /api/voz; si falla (límite, internet…),
+   * usa la voz del navegador para que nunca se quede callado.
+   */
+  const hablar = useCallback(
+    async (texto: string) => {
+      if (!vozActivaRef.current) return;
+      const limpio = texto.trim();
+      if (!limpio) return;
+
+      detenerTodo();
+      setError(null);
+      const control = new AbortController();
+      peticionRef.current = control;
+      setCargandoVoz(true);
+
+      const fragmentos = dividirTexto(limpio);
+
+      // Pide el audio de un fragmento al servidor
+      const pedirAudio = async (fragmento: string): Promise<Blob> => {
+        const respuesta = await fetch("/api/voz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto: fragmento }),
+          signal: control.signal,
+        });
+        if (!respuesta.ok) {
+          const data = (await respuesta.json()) as { error?: unknown };
+          const mensaje =
+            typeof data.error === "string"
+              ? data.error
+              : `ElevenLabs respondió con HTTP ${respuesta.status}.`;
+          throw new Error(mensaje);
+        }
+        return respuesta.blob();
+      };
+
+      // Reproduce un audio y avisa cuando termina
+      const reproducir = (blob: Blob) =>
+        new Promise<void>((resolver, rechazar) => {
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          urlAudioRef.current = url;
+          audioRef.current = audio;
+
+          const limpiar = () => {
+            URL.revokeObjectURL(url);
+            if (urlAudioRef.current === url) urlAudioRef.current = null;
+            if (audioRef.current === audio) audioRef.current = null;
+          };
+
+          audio.onplay = () => setHablando(true);
+          audio.onended = () => {
+            limpiar();
+            resolver();
+          };
+          audio.onpause = () => {
+            limpiar();
+            resolver();
+          };
+          audio.onerror = () => {
+            limpiar();
+            rechazar(new Error("No se pudo reproducir el audio"));
+          };
+
+          audio.play().catch((e) => {
+            limpiar();
+            rechazar(e);
+          });
+        });
+
+      let indice = 0;
+      try {
+        for (indice = 0; indice < fragmentos.length; indice++) {
+          const blob = await pedirAudio(fragmentos[indice]);
+          if (control.signal.aborted) return;
+          setCargandoVoz(false);
+          await reproducir(blob);
+          if (control.signal.aborted) return;
+        }
+        setHablando(false);
+      } catch (error) {
+        // Si se canceló a propósito, no hay nada más que hacer
+        if (control.signal.aborted) return;
+        setCargandoVoz(false);
+        setError(
+          `${error instanceof Error ? error.message : "Falló la voz de ElevenLabs."} Se usará la voz del navegador.`,
+        );
+        // Respaldo: lo que falte lo dice la voz del navegador
+        hablarConNavegador(fragmentos.slice(indice).join(" "));
+      }
+    },
+    [detenerTodo, hablarConNavegador],
+  );
+
   /** Calla al Cronista de inmediato. */
   const detenerVoz = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+    detenerTodo();
     setHablando(false);
-  }, []);
+    setCargandoVoz(false);
+  }, [detenerTodo]);
 
   /** Enciende o apaga la voz del Cronista. */
   const alternarVoz = useCallback(() => {
@@ -206,6 +347,7 @@ export function useVoz() {
 
   return {
     hablando,
+    cargandoVoz,
     escuchando,
     vozActiva,
     soportaMicrofono,

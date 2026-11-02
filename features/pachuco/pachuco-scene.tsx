@@ -18,10 +18,10 @@ const Pachuco3D = dynamic(() => import("./pachuco-3d"), {
   ),
 });
 
-export function PachucoScene() {
+export function PachucoScene({ hablando = false }: { hablando?: boolean }) {
   return (
     <div className="h-[420px] w-full sm:h-[520px]">
-      <Pachuco3D />
+      <Pachuco3D hablando={hablando} />
     </div>
   );
 }
